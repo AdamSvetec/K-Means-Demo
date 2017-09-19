@@ -9,11 +9,10 @@
 #include <assert.h>
 
 template <typename T>
-class point {
+struct point {
     T x;
     T y;
 
-  public:
     point(): x(0), y(0){}
     point(T x1, T y1): x(x1), y(y1){}
 

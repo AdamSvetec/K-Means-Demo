@@ -166,10 +166,10 @@ int reduce_min_ind( const point<T> centroid[], size_t k, point<T> value ){
 template <typename T> void repair_empty_clusters( size_t n, point<T> const points[], cluster_id id[], size_t k, point<T> centroids[], sum_and_count<T> array[]){
     for( int i=0; i < k; ++i){
         if(array[i].count == 0){
-            int k = find_furthest_point( centroids[i], n, points );
-            id[k] = i;
-            array[i].tally(points[k]);
-            array[id[k]].remove(points[k]);
+            int max_index = find_furthest_point( centroids[i], n, points );
+            id[max_index] = i;
+            array[i].tally(points[max_index]);
+            array[id[k]].remove(points[max_index]);
         }
     }   
     return;
