@@ -14,12 +14,17 @@ class point {
     T y;
 
   public:
-    point(): x(), y(){}
+    point(): x(0), y(0){}
     point(T x1, T y1): x(x1), y(y1){}
 
     void operator+=( point<T> const & p ){
         x += p.x;
         y += p.y;
+    }
+
+    void operator-=( point<T> const & p ){
+        x -= p.x;
+        y -= p.y;
     }
 
     point<T> operator/( size_t const & s ) const {

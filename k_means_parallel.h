@@ -11,6 +11,8 @@
 
 #include "point.h"
 
+//holds a sum of points and the number of points added to it
+//can add other sum_and_counts to itself
 template <typename T>
 struct sum_and_count {
     sum_and_count(): sum(), count(0) {}
@@ -24,6 +26,10 @@ struct sum_and_count {
         sum += p;
         ++count;
     }
+    void remove( point<T> const & p){
+        sum -= p;
+        --count;
+    }
     point<T> mean() const {
         return sum/count;
     }
@@ -33,6 +39,8 @@ struct sum_and_count {
     }
 };
 
+//view for each thread
+//holds a sum_and_count for each centroid
 template <typename T>
 class view{
     view( view const & v) = delete;
@@ -52,12 +60,18 @@ template <typename T> void reduce_local_sums_to_global_sum( size_t k, tls_type<T
 template <typename T> int reduce_min_ind( const point<T> centroid[], size_t k, point<T> value );
 template <typename T> void repair_empty_clusters( size_t n, point<T> const points[], cluster_id id[], size_t k, point<T> centroids[], sum_and_count<T> const array[]); 
 
+//n: number of points
+//points: array of points of size n
+//k: number of clusters
+//id: array of cluster ids, one for each point, size n
+//centroids: array of centroid points of size k
 template <typename T>
 void compute_k_means_parallel( size_t n, const point<T> points[], size_t k, cluster_id id[], point<T> centroids[] ){
 
     tls_type<T> tls([&]{return k;});
     view<T> global(k);
 
+    //'randomly' assign points to cluster and sum the points of each cluster 
     tbb::parallel_for( tbb::blocked_range<size_t>(0,n), 
             [=,&tls,&global]( tbb::blocked_range<size_t> r ){
                 view<T>& v = tls.local();
@@ -72,7 +86,7 @@ void compute_k_means_parallel( size_t n, const point<T> points[], size_t k, clus
     //Loop until ids do not change
     size_t change;
     do {
-        //reduce local sums to global sum
+        //reduce local sums to global sums
         reduce_local_sums_to_global_sum( k, tls, global );
 
         //repair any empty clusters
@@ -91,22 +105,25 @@ void compute_k_means_parallel( size_t n, const point<T> points[], size_t k, clus
                     for( size_t i=r.begin(); i!=r.end(); ++i){
                         //reassign step: find index closest to points[i]
                         cluster_id j = reduce_min_ind(centroids, k, points[i]);
+                        //if point is assigned to new cluster, update its id and indicate change
                         if( j!=id[i] ){
                             id[i] = j;
                             ++v.change;
                         }
-                        //sum step
+                        //add point to centroid sum and count
                         v.array[j].tally(points[i]);
                     }
                 }
         );
 
-        //reduce local counts to global count
+        //reduce local change count to a single global change count
         reduce_local_counts_to_global_count( tls, global );
     }
-    while( global.change != 0 );
+    while( global.change != 0 ); //if any points have switched centroids
 }
 
+//iterates through all changes to find total amount of changes
+//resets local changes to 0
 template <typename T>
 void reduce_local_counts_to_global_count( tls_type<T>& tls, view<T>& global ){
     global.change = 0;
@@ -117,6 +134,7 @@ void reduce_local_counts_to_global_count( tls_type<T>& tls, view<T>& global ){
     }   
 }
 
+//goes through each view and adds sum_and_counts for each centroid to global array of sum_and_counts
 template <typename T>
 void reduce_local_sums_to_global_sum( size_t k, tls_type<T>& tls, view<T>& global ){
     for( auto i=tls.begin(); i!=tls.end(); ++i ){
@@ -128,6 +146,7 @@ void reduce_local_sums_to_global_sum( size_t k, tls_type<T>& tls, view<T>& globa
     }
 }
 
+//find closest centroid for a given point
 template <typename T> 
 int reduce_min_ind( const point<T> centroid[], size_t k, point<T> value ){
     int min = -1;
@@ -142,9 +161,33 @@ int reduce_min_ind( const point<T> centroid[], size_t k, point<T> value ){
     return min;
 }
 
-template <typename T> void repair_empty_clusters( size_t n, point<T> const points[], cluster_id id[], size_t k, point<T> centroids[], sum_and_count<T> const array[]){
-    //todo still need to implement
+//reassign a centroid if it does not have any points assigned to it
+//definitely some edge cases missed
+template <typename T> void repair_empty_clusters( size_t n, point<T> const points[], cluster_id id[], size_t k, point<T> centroids[], sum_and_count<T> array[]){
+    for( int i=0; i < k; ++i){
+        if(array[i].count == 0){
+            int k = find_furthest_point( centroids[i], n, points );
+            id[k] = i;
+            array[i].tally(points[k]);
+            array[id[k]].remove(points[k]);
+        }
+    }   
     return;
+}
+
+//find furthest point from a given centroid
+template <typename T>
+int find_furthest_point( const point<T> centroid, size_t n, point<T> const points[] ){
+    int max = -1;
+    T maxd = std::numeric_limits<T>::min();
+    for( int j = 0; j<n; ++j ){
+        T d = centroid.distance( points[j] );
+        if ( d>maxd ){
+            maxd = d;
+            max = j;
+        }
+    }
+    return max;    
 }
 
 #endif

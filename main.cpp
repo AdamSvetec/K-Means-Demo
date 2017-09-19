@@ -8,6 +8,8 @@
 #include "k_means_serial.h"
 #include "point.h"
 
+//can we find a way to automatically graph results?
+
 int main(int argc, char ** argv){
 
     size_t n = 0;
