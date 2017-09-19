@@ -61,8 +61,20 @@ double test( size_t num_points, size_t clusters, bool parallel, std::string writ
     return time;
 }
 
+void compare_times(){
+    int num_points [4] {100, 1000, 10000, 100000};
+    int num_centroids [4] {10, 10, 100, 100};
+    std::cout << "Points(#), Centroids(#), Parallel Time(ms), Serial Time(ms)\n";
+    for( int i = 0; i < 4; ++i ){
+        double p_exec = test<chrono::microseconds>( num_points[i], num_centroids[i], true);
+        double s_exec = test<chrono::microseconds>( num_points[i], num_centroids[i], false);
+        std::cout << num_points[i] << ", " << num_centroids[i] << ", " << p_exec << ", " << s_exec << "\n"; 
+    } 
+}
+
 int main(int argc, char ** argv){
 
-    double time = test<chrono::milliseconds>( 10000, 10, true, "test_output.csv" );
+    double time = test<chrono::microseconds>( 10000, 10, true, "test_output.csv" );
+    compare_times();
     return 0;
 }
