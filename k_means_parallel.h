@@ -9,50 +9,12 @@
 #include <tbb/blocked_range.h>
 #include <tbb/enumerable_thread_specific.h>
 
-#include "point.h"
 
-//holds a sum of points and the number of points added to it
-//can add other sum_and_counts to itself
-template <typename T>
-struct sum_and_count {
-    sum_and_count(): sum(), count(0) {}
-    point<T> sum;
-    size_t count;
-    void clear() {
-        sum = point<T>();
-        count = 0;
-    }
-    void tally( point<T> const & p ){
-        sum += p;
-        ++count;
-    }
-    void remove( point<T> const & p){
-        sum -= p;
-        --count;
-    }
-    point<T> mean() const {
-        return sum/count;
-    }
-    void operator+=( sum_and_count<T> const & other ){
-        sum += other.sum;
-        count += other.count;
-    }
-};
+#include "utility.h"
 
-//view for each thread
-//holds a sum_and_count for each centroid
-template <typename T>
-class view{
-    view( view const & v) = delete;
-    void operator=( view const & v ) = delete;
-  public:
-    sum_and_count<T> * array;
-    size_t change;
-    view( size_t k ): array(new sum_and_count<T>[k]), change(0) {}
-    ~view() { delete [] array; }
-};
 
-typedef int cluster_id;
+
+
 template <typename T> using tls_type = tbb::enumerable_thread_specific< view<T> >;
 
 template <typename T> void reduce_local_counts_to_global_count( tls_type<T>& tls, view<T>& global );
@@ -146,48 +108,7 @@ void reduce_local_sums_to_global_sum( size_t k, tls_type<T>& tls, view<T>& globa
     }
 }
 
-//find closest centroid for a given point
-template <typename T> 
-int reduce_min_ind( const point<T> centroid[], size_t k, point<T> value ){
-    int min = -1;
-    T mind = std::numeric_limits<T>::max();
-    for( int j = 0; j<k; ++j ){
-        T d = centroid[j].distance( value );
-        if ( d<mind ){
-            mind = d;
-            min = j;
-        }
-    }
-    return min;
-}
 
-//reassign a centroid if it does not have any points assigned to it
-//definitely some edge cases missed
-template <typename T> void repair_empty_clusters( size_t n, point<T> const points[], cluster_id id[], size_t k, point<T> centroids[], sum_and_count<T> array[]){
-    for( int i=0; i < k; ++i){
-        if(array[i].count == 0){
-            int max_index = find_furthest_point( centroids[i], n, points );
-            id[max_index] = i;
-            array[i].tally(points[max_index]);
-            array[id[k]].remove(points[max_index]);
-        }
-    }   
-    return;
-}
 
-//find furthest point from a given centroid
-template <typename T>
-int find_furthest_point( const point<T> centroid, size_t n, point<T> const points[] ){
-    int max = -1;
-    T maxd = std::numeric_limits<T>::min();
-    for( int j = 0; j<n; ++j ){
-        T d = centroid.distance( points[j] );
-        if ( d>maxd ){
-            maxd = d;
-            max = j;
-        }
-    }
-    return max;    
-}
 
 #endif

@@ -8,9 +8,9 @@
 #include <random>
 #include <fstream>
 
+#include "utility.h"
 #include "k_means_parallel.h"
 #include "k_means_serial.h"
-#include "point.h"
 
 //can we find a way to automatically graph results?
 
