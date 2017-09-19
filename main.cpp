@@ -1,4 +1,6 @@
 //Adam Svetec
+//Cameron Clifton
+//CSE 375/475
 
 #include <stdlib.h>
 
