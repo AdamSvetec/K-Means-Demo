@@ -38,6 +38,7 @@ void compute_k_means_serial( size_t n, const point<T> points[], size_t k, cluste
 	id[i]= j;
 	++change;
       }
+      global.array[j].tally(points[i]);
     }
   }
   while(change!=0);
