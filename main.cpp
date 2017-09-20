@@ -9,6 +9,7 @@
 #include <fstream>
 
 #include "utility.h"
+#include "config_t.h"
 #include "k_means_parallel.h"
 #include "k_means_serial.h"
 
@@ -43,6 +44,7 @@ double test( size_t num_points, size_t clusters, bool parallel, std::string writ
     double time = chrono::duration_cast<T>( end - start ).count();
 
     if(write_to_file != ""){
+        std::cout << "Writing results to: " << write_to_file << "\n";
         std::ofstream output_file;
         output_file.open (write_to_file);
         output_file << "#" << (parallel ? "Parallel" : "Serial") << ", Execution Time: " << time;
@@ -78,9 +80,49 @@ void compare_times(){
     }
 }
 
-int main(int argc, char ** argv){
+// Report on how to use the command line to configure this program
+void usage() {
+    std::cout
+        << "Command-Line Options:" << std::endl
+        << "  -n <int>    : number of points" << std::endl
+        << "  -k <int>    : number of clusters" << std::endl
+        << "  -f <string> : print out results to given file" << std::endl
+        << "  -i <int>    : run algorithm i times and get average time" << std::endl
+        << "  -h          : display this message and exit" << std::endl << std::endl;
+    exit(0);
+}
 
-    double time = test<chrono::microseconds>( 10000, 10, true, "test_output.csv" );
-    compare_times();
+// Parse command line arguments using getopt()
+void parseargs(int argc, char** argv, config_t& cfg) {
+    // parse the command-line options
+    int opt;
+    while ((opt = getopt(argc, argv, "n:k:p:i:h")) != -1) {
+        switch (opt) {
+          case 'n': cfg.points = atoi(optarg); break;
+          case 'k': cfg.clusters = atoi(optarg); break;
+          case 'f': cfg.filename = std::string(optarg); break;
+          case 'i': cfg.iterations = atoi(optarg); break;
+          case 'h': usage(); break;
+        }
+    }
+}
+
+int main(int argc, char ** argv){
+    
+    config_t config;
+    parseargs(argc, argv, config);
+    if(config.points == 0 || config.clusters == 0){
+        usage();
+        return 0;
+    }
+    config.dump();
+    double p_time = 0;
+    double s_time = 0;
+    for(int i = 0; i < config.iterations; ++i){
+        p_time += test<chrono::microseconds>( config.points, config.clusters, true, config.filename );
+        s_time += test<chrono::microseconds>( config.points, config.clusters, false, config.filename );
+    }
+    std::cout << "Parallel Exec Time: " << std::fixed << p_time/config.iterations << "\n";
+    std::cout << "Serial Exec Time: " << std::fixed << s_time/config.iterations << "\n";
     return 0;
 }

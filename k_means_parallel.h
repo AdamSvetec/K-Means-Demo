@@ -12,9 +12,6 @@
 
 #include "utility.h"
 
-
-
-
 template <typename T> using tls_type = tbb::enumerable_thread_specific< view<T> >;
 
 template <typename T> void reduce_local_counts_to_global_count( tls_type<T>& tls, view<T>& global );
@@ -107,8 +104,5 @@ void reduce_local_sums_to_global_sum( size_t k, tls_type<T>& tls, view<T>& globa
         }
     }
 }
-
-
-
 
 #endif

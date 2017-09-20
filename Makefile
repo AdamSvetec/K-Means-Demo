@@ -15,7 +15,7 @@ CXXFLAGS = -MMD -ggdb -O3 -std=gnu++11 -I/home/ajs217/tbb/tbb2018_20170726oss/in
 LDFLAGS	 = -m$(BITS) -lpthread -lrt -L$(TBBPATH) -ltbb -Wl,-rpath=$(TBBPATH)
 
 # The basenames of the c++ files that this program uses
-CXXFILES = main
+CXXFILES = config_t main
 
 # The executable we will build
 TARGET = $(ODIR)/a
