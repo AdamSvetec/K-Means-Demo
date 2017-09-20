@@ -62,14 +62,20 @@ double test( size_t num_points, size_t clusters, bool parallel, std::string writ
 }
 
 void compare_times(){
-    int num_points [4] {100, 1000, 10000, 100000};
-    int num_centroids [4] {10, 10, 100, 100};
+    const int SIZE = 6;
+    int num_points [SIZE] {100, 1000, 10000, 100000, 1000000, 10000000};
+    int num_centroids [SIZE] {10, 10, 10, 10, 10, 10};
     std::cout << "Points(#), Centroids(#), Parallel Time(ms), Serial Time(ms)\n";
-    for( int i = 0; i < 4; ++i ){
-        double p_exec = test<chrono::microseconds>( num_points[i], num_centroids[i], true);
-        double s_exec = test<chrono::microseconds>( num_points[i], num_centroids[i], false);
-        std::cout << num_points[i] << ", " << num_centroids[i] << ", " << p_exec << ", " << s_exec << "\n"; 
-    } 
+    int num_iterations = 3;
+    for( int j = 0; j < SIZE; ++j ){
+        double p_exec = 0.0;
+        double s_exec = 0.0;
+        for( int i = 0; i < num_iterations; ++i ){
+            p_exec += test<chrono::microseconds>( num_points[j], num_centroids[j], true);
+            s_exec += test<chrono::microseconds>( num_points[j], num_centroids[j], false);
+        } 
+        std::cout << num_points[j] << ", " << num_centroids[j] << ", " << std::fixed << (p_exec/num_iterations) << ", " << (s_exec/num_iterations) << "\n";
+    }
 }
 
 int main(int argc, char ** argv){
