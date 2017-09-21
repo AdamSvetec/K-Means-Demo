@@ -22,7 +22,7 @@ double test( size_t num_points, size_t clusters, bool parallel, std::string writ
 
     point<float>* points = new point<float>[num_points];
     std::default_random_engine generator;
-    std::uniform_int_distribution<int> distribution(0,1000);
+    std::uniform_int_distribution<int> distribution(0,num_points);
     for(int i=0; i<num_points; ++i){
         points[i] = point<float>((float) distribution(generator), (float) distribution(generator));
     }
@@ -124,5 +124,6 @@ int main(int argc, char ** argv){
     }
     std::cout << "Parallel Exec Time: " << std::fixed << p_time/config.iterations << "\n";
     std::cout << "Serial Exec Time: " << std::fixed << s_time/config.iterations << "\n";
+    std::cout << "Speedup: " << s_time / p_time << "\n";
     return 0;
 }

@@ -1,8 +1,6 @@
-// CSE 375/475 Assignment #1
-// Fall 2017
-//
-// Description: This file declares a struct for storing per-execution
-// configuration information.
+//Adam Svetec
+//Cameron Clifton
+//CSE 375/475
 
 #include <iostream>
 #include <string>
@@ -19,9 +17,7 @@ struct config_t {
 
     std::string  filename;
 
-    // simple constructor
     config_t() : points(0), clusters(0), iterations(1), filename("") { }
 
-    // Print the values of the seed, iters, and name fields
     void dump();
 };
